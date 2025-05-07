@@ -1,46 +1,32 @@
 <!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>HLS Player mit dynamischem Referer</title>
-</head>
-<body>
-  <h1>HLS Stream Player</h1>
-
-  <form id="streamForm">
-    <label for="url">M3U8-Link:</label><br>
-    <input type="text" id="url" name="url" required style="width: 80%;" /><br><br>
-
-    <label for="ref">Referer:</label><br>
-    <input type="text" id="ref" name="ref" required style="width: 80%;" /><br><br>
-
-    <button type="submit">Abspielen</button>
-  </form>
-
-  <br>
-  <video id="video" controls autoplay width="640" height="360"></video>
-
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script>
-    const form = document.getElementById('streamForm');
-    const video = document.getElementById('video');
-
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const url = encodeURIComponent(document.getElementById('url').value);
-      const ref = encodeURIComponent(document.getElementById('ref').value);
-
-      const proxyUrl = `https://m3u8player-o5ng.onrender.com/proxy?url=${url}&ref=${ref}`;
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>HLS Player mit Proxy</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+      body { background: #000; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+      video { width: 90%; max-width: 800px; height: auto; background: #000; }
+    </style>
+  </head>
+  <body>
+    <h2>HLS Player mit Key-Proxy</h2>
+    <video id="video" controls autoplay></video>
+    <script>
+      const video = document.getElementById('video');
+      const m3u8Url = '/test.m3u8'; // relative URL zum bearbeiteten M3U8
 
       if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(proxyUrl);
+        const hls = new Hls({
+          xhrSetup: function(xhr, url) {
+            console.log('Lade:', url);
+          }
+        });
+        hls.loadSource(m3u8Url);
         hls.attachMedia(video);
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = proxyUrl;
+        video.src = m3u8Url;
       }
-    });
-  </script>
-</body>
+    </script>
+  </body>
 </html>
