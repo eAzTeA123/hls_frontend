@@ -217,25 +217,9 @@
         debug: false,
         enableWorker: true,
         xhrSetup: (xhr) => {
-          // Essential Headers
-          xhr.setRequestHeader('Referer', document.getElementById('refererInput').value');
-          xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-          
-          // Additional Headers that might be required
-          xhr.setRequestHeader('Origin', document.getElementById('refererInput').value');
-          xhr.setRequestHeader('Accept', '*/*');
-          xhr.setRequestHeader('Accept-Language', 'en-US,en;q=0.9');
-          xhr.setRequestHeader('Connection', 'keep-alive');
-          xhr.setRequestHeader('Sec-Fetch-Dest', 'empty');
-          xhr.setRequestHeader('Sec-Fetch-Mode', 'cors');
-          xhr.setRequestHeader('Sec-Fetch-Site', 'cross-site');
-          
-          // For cookie-based authentication (if needed)
-          xhr.withCredentials = true;
-          
-          // Cache control (optional)
-          xhr.setRequestHeader('Cache-Control', 'no-cache');
-      }
+            xhr.setRequestHeader('Referer', document.getElementById('refererInput').value);
+            xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36');
+        }
     });
 
     function renderChannels() {
