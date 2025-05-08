@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>M3U8-Stream Player</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body style="text-align: center; font-family: sans-serif; background-color: #111; color: #fff;">
+  <h1>M3U8-Stream abspielen</h1>
+  <input type="text" id="streamUrl" placeholder="M3U8-Link eingeben" style="width: 60%; padding: 8px;">
+  <button onclick="startStream()" style="padding: 8px 16px; margin-left: 8px;">Abspielen</button>
+  <br><br>
+  <video id="video" controls autoplay style="width: 80%; max-width: 900px; border: 2px solid #fff;"></video>
+
+  <script>
+    function startStream() {
+      const inputUrl = document.getElementById('streamUrl').value.trim();
+      if (!inputUrl) return alert("Bitte einen M3U8-Link eingeben!");
+
+      const proxyUrl = 'https://backend-m3u8-eaztea.onrender.com/proxy?url=' + encodeURIComponent(inputUrl);
+      const video = document.getElementById('video');
+
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(proxyUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.ERROR, function (event, data) {
+          console.error("Stream-Fehler:", data);
+          alert("Fehler beim Laden des Streams.");
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = proxyUrl;
+      } else {
+        alert('HLS wird von deinem Browser nicht unterstützt.');
+      }
+    }
+  </script>
+</body>
+</html>
