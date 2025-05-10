@@ -1,33 +1,22 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>HLS Player</title>
-</head>
-<body>
-  <video id="video" controls autoplay style="width: 100%; max-width: 720px;"></video>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<video id="video" controls autoplay></video>
+<script>
+  const video = document.getElementById('video');
+  const videoSrc = 'https://vavoo-proxy.onrender.com/proxy';
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script>
-    const video = document.getElementById('video');
-    const videoSrc = 'https://vavoo.to/play/1346436847/index.m3u8';
-
-    if (Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(videoSrc);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play();
-      });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Für Safari
-      video.src = videoSrc;
-      video.addEventListener('loadedmetadata', () => {
-        video.play();
-      });
-    } else {
-      alert("HLS wird in deinem Browser nicht unterstützt.");
-    }
-  </script>
-</body>
-</html>
+  if (Hls.isSupported()) {
+    const hls = new Hls();
+    hls.loadSource(videoSrc);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.play();
+    });
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = videoSrc;
+    video.addEventListener('loadedmetadata', () => {
+      video.play();
+    });
+  } else {
+    alert('HLS wird nicht unterstützt.');
+  }
+</script>
