@@ -1,22 +1,32 @@
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<video id="video" controls autoplay></video>
-<script>
-  const video = document.getElementById('video');
-  const videoSrc = 'https://vavoo-proxy.onrender.com/proxy';
+<!DOCTYPE html>
+<html>
+<head>
+  <title>VAVOO Stream</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+  <h2>VAVOO Stream Player</h2>
+  <video id="video" controls autoplay width="640" height="360"></video>
 
-  if (Hls.isSupported()) {
-    const hls = new Hls();
-    hls.loadSource(videoSrc);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play();
-    });
-  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = videoSrc;
-    video.addEventListener('loadedmetadata', () => {
-      video.play();
-    });
-  } else {
-    alert('HLS wird nicht unterstützt.');
-  }
-</script>
+  <script>
+    const video = document.getElementById('video');
+    const videoSrc = 'https://vavoo-proxy.onrender.com/proxy'; // Deine echte Render-URL hier
+
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(videoSrc);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, function () {
+        video.play();
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = videoSrc;
+      video.addEventListener('loadedmetadata', function () {
+        video.play();
+      });
+    } else {
+      alert('Dein Browser unterstützt kein HLS');
+    }
+  </script>
+</body>
+</html>
