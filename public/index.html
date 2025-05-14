@@ -1,32 +1,214 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-  <title>VAVOO Stream</title>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Myrcale Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            flex-direction: row;
+            overflow: hidden;
+            flex-wrap: wrap;
+        }
+
+        /* Header Style */
+        .header {
+            width: 100%;
+            text-align: center;
+            padding: 15px;
+            background-color: #333;
+            border-bottom: 2px solid #00ff00;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 36px;
+        }
+
+        /* Video Container */
+        #video-container {
+            width: 70%;
+            height: 80%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-left: 10px;
+            padding-right: 10px;
+            flex-grow: 1;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            border: 5px solid #00ff00;
+            border-radius: 10px;
+        }
+
+        /* Channel List Container */
+        #channel-list-container {
+            width: 300px;
+            height: 80%;
+            background-color: #333;
+            padding: 20px;
+            margin-right: 20px;
+            border-radius: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        #channel-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+
+        #channel-list li {
+            background-color: #444;
+            color: #fff;
+            padding: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        #channel-list li:hover {
+            background-color: #555;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            #video-container {
+                width: 100%;
+                height: 400px;
+                margin-bottom: 20px;
+            }
+
+            #channel-list-container {
+                width: 100%;
+                height: auto;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h2>VAVOO Stream Player</h2>
-  <video id="video" controls autoplay width="640" height="360"></video>
+    <div class="header">
+        <h1>Myrcale Player</h1>
+    </div>
 
-  <script>
-    const video = document.getElementById('video');
-    const videoSrc = 'https://vavoo-proxy.onrender.com/proxy'; // Deine echte Render-URL hier
+    <div id="video-container">
+        <video id="video" controls></video>
+    </div>
 
-    if (Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(videoSrc);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, function () {
-        video.play();
-      });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = videoSrc;
-      video.addEventListener('loadedmetadata', function () {
-        video.play();
-      });
-    } else {
-      alert('Dein Browser unterstützt kein HLS');
+    <div id="channel-list-container">
+        <ul id="channel-list"></ul>
+    </div>
+
+    <script>
+        // URL der JSON-Datei
+        const jsonUrl = 'https://raw.githubusercontent.com/eAzTeA123/m3u8player/main/m3u8_links.json';
+
+        // Manuell hinzugefügte Channels
+        const manualChannels = [
+            {
+                name: 'DAZN 1',
+                m3u8: 'https://ddy6new.newkso.ru/ddy6/premium426/mono.m3u8'
+            },
+            {
+                name: 'DAZN 2',
+                m3u8: 'https://ddy6new.newkso.ru/ddy6/premium427/mono.m3u8'
+            }
+        ];
+
+        // Channel-Array, das sowohl manuelle als auch JSON-Kanäle enthält
+        const channels = [];
+
+        // Channels aus der JSON-Datei laden und in das Array einfügen
+        fetch(jsonUrl)
+            .then(response => response.json())
+            .then(data => {
+                const proxyData = data.proxy_used.split(':');
+                const proxyHost = proxyData[0];
+                const proxyPort = proxyData[1];
+                const proxyUser = proxyData[2];
+                const proxyPassword = proxyData[3];
+                const proxyUrl = `http://${proxyUser}:${proxyPassword}@${proxyHost}:${proxyPort}`;
+
+                // Channels aus der JSON-Datei hinzufügen
+                data.results.forEach(channel => {
+                    channels.push({
+                        name: channel.name,
+                        m3u8: channel.m3u8,
+                        proxy: proxyUrl
+                    });
+                });
+
+                // Manuell hinzugefügte Channels hinzufügen
+                manualChannels.forEach(channel => {
+                    channels.push({
+                        name: channel.name,
+                        m3u8: channel.m3u8,
+                        proxy: proxyUrl
+                    });
+                });
+
+                // Kanäle in die HTML-Liste einfügen
+                const channelList = document.getElementById('channel-list');
+                channels.forEach((channel, index) => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = channel.name;
+                    listItem.onclick = function() {
+                        loadStream(channel.m3u8, channel.proxy);
+                    };
+                    channelList.appendChild(listItem);
+                });
+            })
+            .catch(error => {
+                console.error('Fehler beim Laden der JSON-Datei:', error);
+            });
+
+        // Funktion zum Laden des Streams
+        function loadStream(m3u8Url) {
+        const video = document.getElementById('video');
+        if (Hls.isSupported()) {
+            const hls = new Hls({
+                xhrSetup: function(xhr) {
+                    // Eigenen Proxy-Server verwenden
+                    const finalUrl = `https://hls-frontend.vercel.app/api/proxy?url=${encodeURIComponent(m3u8Url)}`;
+                    
+                    // Header manipulieren
+                    xhr.open('GET', finalUrl, true);
+                    xhr.setRequestHeader('Referrer-Policy', 'no-referrer');
+                    xhr.setRequestHeader('Origin', 'https://your-vercel-app.vercel.app');
+                },
+                enableWorker: true
+            });
+
+            hls.loadSource(m3u8Url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        }
     }
-  </script>
+</script>
 </body>
 </html>
