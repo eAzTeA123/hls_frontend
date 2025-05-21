@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>📺 IPTV & Events</title>
+  <title>Myrcale IPTV</title>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     body {
@@ -122,16 +122,12 @@
 </head>
 <body>
   <header>
-    <h1>📺 CSport Streams & Events</h1>
+    <h1>📺 Myrcale Streams & Events</h1>
   </header>
 
   <div class="container">
-    <input type="text" id="searchChannels" placeholder="🔍 Suche Sender...">
+    <input type="text" id="search" placeholder="🔍 Suche Sender oder Event...">
     <div id="channelList"></div>
-
-    <hr style="margin: 3rem 0; border: none; border-top: 1px solid #444"/>
-
-    <input type="text" id="searchEvents" placeholder="🔍 Suche Events...">
     <div id="eventList"></div>
   </div>
 
@@ -159,18 +155,19 @@
           const name = info.split(',').pop().trim();
           const logo = info.match(/tvg-logo="(.*?)"/)?.[1] || '';
           const group = info.match(/group-title="(.*?)"/)?.[1] || 'Andere';
-          list.push({ name, logo, group, url });
+          list.push({ name, logo, group, url, type: 'channel' });
         }
       }
       return list;
     }
 
-    function renderSection(list, containerId, searchId, type = 'channel') {
+    function renderList(list, containerId) {
       const container = document.getElementById(containerId);
-      const searchVal = document.getElementById(searchId).value.toLowerCase();
       container.innerHTML = '';
 
+      const searchVal = document.getElementById('search').value.toLowerCase();
       const groups = {};
+
       list.forEach(item => {
         if (!item.name.toLowerCase().includes(searchVal)) return;
         if (!groups[item.group]) groups[item.group] = [];
@@ -184,7 +181,7 @@
 
         groups[group].forEach(item => {
           const div = document.createElement('div');
-          div.className = type;
+          div.className = item.type;
           div.innerHTML = `
             <img src="${item.logo}" alt="${item.name}" />
             <div class="info">
@@ -220,12 +217,9 @@
       video.src = '';
     });
 
-    document.getElementById('searchChannels').addEventListener('input', () => {
-      renderSection(window.allChannels, 'channelList', 'searchChannels', 'channel');
-    });
-
-    document.getElementById('searchEvents').addEventListener('input', () => {
-      renderSection(window.allEvents, 'eventList', 'searchEvents', 'event');
+    document.getElementById('search').addEventListener('input', () => {
+      renderList(window.allItems, 'channelList');
+      renderList(window.allItems, 'eventList');
     });
 
     async function init() {
@@ -233,10 +227,13 @@
         loadPlaylist("https://eaztea-myrcale.hf.space/playlist/channels"),
         loadPlaylist("https://eaztea-myrcale.hf.space/playlist/events")
       ]);
+
       window.allChannels = channels;
       window.allEvents = events;
-      renderSection(channels, 'channelList', 'searchChannels', 'channel');
-      renderSection(events, 'eventList', 'searchEvents', 'event');
+
+      window.allItems = [...channels, ...events];
+      renderList(window.allItems, 'channelList');
+      renderList(window.allItems, 'eventList');
     }
 
     init();
