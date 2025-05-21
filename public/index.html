@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📺 Channel Liste</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 1rem;
+    }
+    input {
+      padding: 0.5rem;
+      width: 100%;
+      margin-bottom: 1rem;
+      border-radius: 5px;
+      border: none;
+    }
+    .group {
+      margin-bottom: 2rem;
+    }
+    .channel {
+      display: flex;
+      align-items: center;
+      background: #222;
+      padding: 0.5rem;
+      margin: 0.3rem 0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .channel:hover {
+      background: #333;
+    }
+    .channel img {
+      width: 50px;
+      height: auto;
+      margin-right: 1rem;
+    }
+    #playerModal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      display: none;
+      z-index: 9999;
+    }
+    #videoContainer {
+      max-width: 800px;
+      width: 90%;
+    }
+    video {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+    }
+    #closeBtn {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 30px;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>📺 IPTV Senderliste</h1>
+  <input type="text" id="search" placeholder="🔍 Suche Sender..."/>
+
+  <div id="channelList"></div>
+
+  <div id="playerModal">
+    <span id="closeBtn">✖</span>
+    <div id="videoContainer">
+      <video id="video" controls autoplay></video>
+    </div>
+  </div>
+
+  <script>
+    async function loadPlaylist() {
+      const res = await fetch("https://eaztea-myrcale.hf.space/playlist/channels");
+      const text = await res.text();
+      return parseM3U(text);
+    }
+
+    function parseM3U(data) {
+      const lines = data.split('\n');
+      const channels = [];
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('#EXTINF')) {
+          const info = lines[i];
+          const url = lines[i + 1];
+          const name = info.split(',').pop().trim();
+          const logo = info.match(/tvg-logo="(.*?)"/)?.[1] || '';
+          const group = info.match(/group-title="(.*?)"/)?.[1] || 'Andere';
+          channels.push({ name, logo, group, url });
+        }
+      }
+      return channels;
+    }
+
+    function renderChannels(channels) {
+      const container = document.getElementById('channelList');
+      container.innerHTML = '';
+      const search = document.getElementById('search').value.toLowerCase();
+
+      const groups = {};
+      channels.forEach(ch => {
+        if (!ch.name.toLowerCase().includes(search)) return;
+        if (!groups[ch.group]) groups[ch.group] = [];
+        groups[ch.group].push(ch);
+      });
+
+      for (const group in groups) {
+        const groupEl = document.createElement('div');
+        groupEl.className = 'group';
+        groupEl.innerHTML = `<h2>${group}</h2>`;
+        groups[group].forEach(ch => {
+          const div = document.createElement('div');
+          div.className = 'channel';
+          div.innerHTML = `
+            <img src="${ch.logo}" alt="${ch.name}" />
+            <span>${ch.name}</span>
+          `;
+          div.addEventListener('click', () => openPlayer(ch.url));
+          groupEl.appendChild(div);
+        });
+        container.appendChild(groupEl);
+      }
+    }
+
+    function openPlayer(url) {
+      const video = document.getElementById('video');
+      const modal = document.getElementById('playerModal');
+      modal.style.display = 'flex';
+
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(video);
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = url;
+      }
+    }
+
+    document.getElementById('closeBtn').addEventListener('click', () => {
+      document.getElementById('playerModal').style.display = 'none';
+      const video = document.getElementById('video');
+      video.pause();
+      video.src = '';
+    });
+
+    document.getElementById('search').addEventListener('input', () => renderChannels(window.allChannels));
+
+    loadPlaylist().then(channels => {
+      window.allChannels = channels;
+      renderChannels(channels);
+    });
+  </script>
+</body>
+</html>
