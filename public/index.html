@@ -155,7 +155,7 @@
           const name = info.split(',').pop().trim();
           const logo = info.match(/tvg-logo="(.*?)"/)?.[1] || '';
           const group = info.match(/group-title="(.*?)"/)?.[1] || 'Andere';
-          list.push({ name, logo, group, url, type: 'channel' });
+          list.push({ name, logo, group, url, type: url.includes('event') ? 'event' : 'channel' });
         }
       }
       return list;
@@ -218,8 +218,8 @@
     });
 
     document.getElementById('search').addEventListener('input', () => {
-      renderList(window.allItems, 'channelList');
-      renderList(window.allItems, 'eventList');
+      if (window.allChannels) renderList(window.allChannels, 'channelList');
+      if (window.allEvents) renderList(window.allEvents, 'eventList');
     });
 
     async function init() {
@@ -231,9 +231,8 @@
       window.allChannels = channels;
       window.allEvents = events;
 
-      window.allItems = [...channels, ...events];
-      renderList(window.allItems, 'channelList');
-      renderList(window.allItems, 'eventList');
+      renderList(channels, 'channelList');
+      renderList(events, 'eventList');
     }
 
     init();
