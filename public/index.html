@@ -3,78 +3,137 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>📺 Channel Liste</title>
+  <title>📺 IPTV & Events</title>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     body {
-      background: #111;
-      color: #fff;
-      font-family: sans-serif;
       margin: 0;
-      padding: 1rem;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0e0e0e;
+      color: #fff;
     }
+
+    header {
+      background: linear-gradient(135deg, #00ff99, #0077ff);
+      padding: 3rem 1rem;
+      text-align: center;
+      color: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      letter-spacing: 1px;
+      text-shadow: 2px 2px #000;
+    }
+
+    .container {
+      padding: 2rem;
+      max-width: 1100px;
+      margin: auto;
+    }
+
     input {
-      padding: 0.5rem;
       width: 100%;
-      margin-bottom: 1rem;
-      border-radius: 5px;
+      padding: 0.7rem;
       border: none;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
+      background: #1e1e1e;
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.3s ease;
     }
+
+    input:focus {
+      outline: none;
+      background: #2a2a2a;
+    }
+
     .group {
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
     }
-    .channel {
+
+    .group h2 {
+      color: #00ff99;
+      font-size: 1.5rem;
+      border-bottom: 1px solid #00ff9960;
+      padding-bottom: 0.4rem;
+    }
+
+    .channel, .event {
       display: flex;
       align-items: center;
-      background: #222;
-      padding: 0.5rem;
-      margin: 0.3rem 0;
-      border-radius: 6px;
+      background: #1b1b1b;
+      padding: 0.8rem;
+      margin: 0.4rem 0;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s ease, background 0.2s ease;
       cursor: pointer;
-      transition: background 0.2s;
     }
-    .channel:hover {
-      background: #333;
+
+    .channel:hover, .event:hover {
+      background: #2c2c2c;
+      transform: translateY(-2px);
     }
-    .channel img {
-      width: 50px;
+
+    .channel img, .event img {
+      width: 60px;
       height: auto;
       margin-right: 1rem;
+      border-radius: 6px;
     }
+
+    .event .info, .channel .info {
+      flex-grow: 1;
+    }
+
     #playerModal {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.9);
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background: rgba(0,0,0,0.95);
       display: none;
+      align-items: center;
+      justify-content: center;
       z-index: 9999;
     }
+
     #videoContainer {
       max-width: 800px;
       width: 90%;
     }
+
     video {
       width: 100%;
-      height: auto;
       border-radius: 10px;
     }
+
     #closeBtn {
       position: absolute;
-      top: 20px;
-      right: 30px;
-      font-size: 30px;
+      top: 30px;
+      right: 40px;
+      font-size: 40px;
       color: white;
       cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <h1>📺 IPTV Senderliste</h1>
-  <input type="text" id="search" placeholder="🔍 Suche Sender..."/>
+  <header>
+    <h1>📺 CSport Streams & Events</h1>
+  </header>
 
-  <div id="channelList"></div>
+  <div class="container">
+    <input type="text" id="searchChannels" placeholder="🔍 Suche Sender...">
+    <div id="channelList"></div>
+
+    <hr style="margin: 3rem 0; border: none; border-top: 1px solid #444"/>
+
+    <input type="text" id="searchEvents" placeholder="🔍 Suche Events...">
+    <div id="eventList"></div>
+  </div>
 
   <div id="playerModal">
     <span id="closeBtn">✖</span>
@@ -84,15 +143,15 @@
   </div>
 
   <script>
-    async function loadPlaylist() {
-      const res = await fetch("https://eaztea-myrcale.hf.space/playlist/channels");
+    async function loadPlaylist(url) {
+      const res = await fetch(url);
       const text = await res.text();
       return parseM3U(text);
     }
 
     function parseM3U(data) {
       const lines = data.split('\n');
-      const channels = [];
+      const list = [];
       for (let i = 0; i < lines.length; i++) {
         if (lines[i].startsWith('#EXTINF')) {
           const info = lines[i];
@@ -100,38 +159,42 @@
           const name = info.split(',').pop().trim();
           const logo = info.match(/tvg-logo="(.*?)"/)?.[1] || '';
           const group = info.match(/group-title="(.*?)"/)?.[1] || 'Andere';
-          channels.push({ name, logo, group, url });
+          list.push({ name, logo, group, url });
         }
       }
-      return channels;
+      return list;
     }
 
-    function renderChannels(channels) {
-      const container = document.getElementById('channelList');
+    function renderSection(list, containerId, searchId, type = 'channel') {
+      const container = document.getElementById(containerId);
+      const searchVal = document.getElementById(searchId).value.toLowerCase();
       container.innerHTML = '';
-      const search = document.getElementById('search').value.toLowerCase();
 
       const groups = {};
-      channels.forEach(ch => {
-        if (!ch.name.toLowerCase().includes(search)) return;
-        if (!groups[ch.group]) groups[ch.group] = [];
-        groups[ch.group].push(ch);
+      list.forEach(item => {
+        if (!item.name.toLowerCase().includes(searchVal)) return;
+        if (!groups[item.group]) groups[item.group] = [];
+        groups[item.group].push(item);
       });
 
       for (const group in groups) {
         const groupEl = document.createElement('div');
         groupEl.className = 'group';
         groupEl.innerHTML = `<h2>${group}</h2>`;
-        groups[group].forEach(ch => {
+
+        groups[group].forEach(item => {
           const div = document.createElement('div');
-          div.className = 'channel';
+          div.className = type;
           div.innerHTML = `
-            <img src="${ch.logo}" alt="${ch.name}" />
-            <span>${ch.name}</span>
+            <img src="${item.logo}" alt="${item.name}" />
+            <div class="info">
+              <strong>${item.name}</strong>
+            </div>
           `;
-          div.addEventListener('click', () => openPlayer(ch.url));
+          div.addEventListener('click', () => openPlayer(item.url));
           groupEl.appendChild(div);
         });
+
         container.appendChild(groupEl);
       }
     }
@@ -157,12 +220,26 @@
       video.src = '';
     });
 
-    document.getElementById('search').addEventListener('input', () => renderChannels(window.allChannels));
-
-    loadPlaylist().then(channels => {
-      window.allChannels = channels;
-      renderChannels(channels);
+    document.getElementById('searchChannels').addEventListener('input', () => {
+      renderSection(window.allChannels, 'channelList', 'searchChannels', 'channel');
     });
+
+    document.getElementById('searchEvents').addEventListener('input', () => {
+      renderSection(window.allEvents, 'eventList', 'searchEvents', 'event');
+    });
+
+    async function init() {
+      const [channels, events] = await Promise.all([
+        loadPlaylist("https://eaztea-myrcale.hf.space/playlist/channels"),
+        loadPlaylist("https://eaztea-myrcale.hf.space/playlist/events")
+      ]);
+      window.allChannels = channels;
+      window.allEvents = events;
+      renderSection(channels, 'channelList', 'searchChannels', 'channel');
+      renderSection(events, 'eventList', 'searchEvents', 'event');
+    }
+
+    init();
   </script>
 </body>
 </html>
