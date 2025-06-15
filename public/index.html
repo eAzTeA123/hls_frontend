@@ -6,102 +6,171 @@
   <title>Myrcale IPTV</title>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
+    :root {
+      --primary: #00ff99;
+      --primary-dark: #00cc77;
+      --secondary: #0077ff;
+      --dark-bg: #0e0e0e;
+      --card-bg: #1b1b1b;
+      --header-gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #0e0e0e;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--dark-bg);
       color: #fff;
+      line-height: 1.6;
     }
 
     header {
-      background: linear-gradient(135deg, #00ff99, #0077ff);
-      padding: 2rem 1rem;
+      background: var(--header-gradient);
+      padding: 1.5rem 1rem;
       text-align: center;
       color: white;
       box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-      position: relative;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
     header h1 {
       margin: 0;
-      font-size: 2rem;
-      letter-spacing: 1px;
-      text-shadow: 2px 2px #000;
+      font-size: 1.8rem;
+      letter-spacing: 0.5px;
+      text-shadow: 2px 2px 3px rgba(0,0,0,0.5);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .container {
       padding: 1.5rem;
-      max-width: 1200px;
+      max-width: 1400px;
       margin: auto;
     }
 
     .search-container {
       position: relative;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.8rem;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     input {
       width: 100%;
-      padding: 0.9rem 1rem 0.9rem 3rem;
+      padding: 0.9rem 1rem 0.9rem 3.2rem;
       border: none;
       border-radius: 12px;
       background: #1e1e1e;
       color: #fff;
-      font-size: 1rem;
+      font-size: 1.05rem;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 1px solid #2a2a2a;
     }
 
     input:focus {
       outline: none;
       background: #2a2a2a;
-      box-shadow: 0 4px 15px rgba(0, 255, 153, 0.2);
+      box-shadow: 0 4px 15px rgba(0, 255, 153, 0.3);
+      border-color: var(--primary);
     }
 
     .search-icon {
       position: absolute;
-      left: 1rem;
+      left: 1.2rem;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 1.2rem;
-      color: #00ff99;
+      font-size: 1.3rem;
+      color: var(--primary);
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0 0;
+      color: rgba(255,255,255,0.8);
+      font-size: 0.95rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .channel-count {
+      display: inline-block;
+      background: var(--primary);
+      color: #000;
+      font-weight: bold;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .groups-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 25px;
     }
 
     .group {
-      margin-bottom: 2rem;
       background: rgba(30, 30, 30, 0.7);
       border-radius: 15px;
       padding: 1.2rem;
       box-shadow: 0 8px 25px rgba(0,0,0,0.4);
       border: 1px solid #2a2a2a;
+      transition: all 0.3s ease;
+    }
+
+    .group:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0, 255, 153, 0.15);
+    }
+
+    .group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.7rem;
+      border-bottom: 2px solid var(--primary-dark);
     }
 
     .group h2 {
-      color: #00ff99;
-      font-size: 1.5rem;
-      border-bottom: 2px solid #00ff9960;
-      padding-bottom: 0.6rem;
-      margin-top: 0;
+      color: var(--primary);
+      font-size: 1.4rem;
+      margin: 0;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
+    .group-channel-count {
+      background: rgba(0, 255, 153, 0.15);
+      color: var(--primary);
+      padding: 3px 10px;
+      border-radius: 15px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
     .channels-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 15px;
-      margin-top: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
     }
 
     .channel {
       background: linear-gradient(145deg, #1b1b1b, #222);
       border-radius: 12px;
-      padding: 15px;
+      padding: 12px;
       transition: all 0.3s ease;
       cursor: pointer;
       box-shadow: 0 5px 15px rgba(0,0,0,0.3);
@@ -109,44 +178,45 @@
       display: flex;
       flex-direction: column;
       height: 100%;
+      text-align: center;
     }
 
     .channel:hover {
-      transform: translateY(-5px);
+      transform: translateY(-3px);
       box-shadow: 0 8px 20px rgba(0, 255, 153, 0.25);
-      border-color: #00ff99;
+      border-color: var(--primary);
+      background: linear-gradient(145deg, #222, #2a2a2a);
     }
 
     .channel-logo {
       width: 100%;
-      height: 120px;
+      height: 80px;
       border-radius: 8px;
       object-fit: contain;
       background: #000;
       margin-bottom: 12px;
       border: 1px solid #333;
+      padding: 5px;
+      align-self: center;
     }
 
     .channel-name {
       font-weight: 600;
-      font-size: 1.1rem;
-      margin-bottom: 5px;
+      font-size: 0.95rem;
       color: #fff;
       flex-grow: 1;
-    }
-
-    .channel-group {
-      color: #00ff99;
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 5px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-height: 40px;
     }
 
     #playerModal {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.95);
+      background: rgba(0,0,0,0.97);
       display: none;
       align-items: center;
       justify-content: center;
@@ -163,7 +233,8 @@
     video {
       width: 100%;
       border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+      background: #000;
     }
 
     #closeBtn {
@@ -181,6 +252,7 @@
       align-items: center;
       justify-content: center;
       transition: all 0.3s;
+      z-index: 1001;
     }
 
     #closeBtn:hover {
@@ -198,18 +270,20 @@
       background: rgba(0,0,0,0.5);
       border-radius: 0 0 10px 10px;
       margin-top: -5px;
+      font-weight: 600;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
     }
 
     .loading {
       text-align: center;
       padding: 3rem;
-      color: #00ff99;
+      color: var(--primary);
     }
 
     .loading-spinner {
       border: 4px solid rgba(0, 255, 153, 0.3);
       border-radius: 50%;
-      border-top: 4px solid #00ff99;
+      border-top: 4px solid var(--primary);
       width: 40px;
       height: 40px;
       animation: spin 1s linear infinite;
@@ -221,22 +295,55 @@
       100% { transform: rotate(360deg); }
     }
 
-    .stats {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      color: #aaa;
-      font-size: 0.9rem;
+    .no-results {
+      text-align: center;
+      padding: 3rem;
+      color: #ff5555;
+      grid-column: 1 / -1;
     }
 
-    .channel-count {
-      display: inline-block;
-      background: #00ff99;
-      color: #000;
-      font-weight: bold;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 0.8rem;
+    .no-results svg {
+      margin-bottom: 1rem;
+    }
+
+    .empty-group {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .groups-container {
+        grid-template-columns: 1fr;
+      }
+      
+      header h1 {
+        font-size: 1.5rem;
+      }
+      
+      .group h2 {
+        font-size: 1.2rem;
+      }
+    }
+
+    .player-controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .control-btn {
+      background: rgba(0, 255, 153, 0.2);
+      border: none;
+      color: var(--primary);
+      padding: 8px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .control-btn:hover {
+      background: rgba(0, 255, 153, 0.3);
     }
   </style>
 </head>
@@ -247,24 +354,25 @@
         <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
         <polyline points="17 2 12 7 7 2"></polyline>
       </svg>
-      Myrcale IPTV
+      Myrcale IPTV Player
     </h1>
-    <div class="stats">
-      <div>Lädt Kanäle...</div>
-      <div>Kanäle: <span id="channelCount" class="channel-count">0</span></div>
-    </div>
   </header>
 
   <div class="container">
     <div class="search-container">
       <div class="search-icon">🔍</div>
-      <input type="text" id="search" placeholder="Suche Sender...">
+      <input type="text" id="search" placeholder="Suche nach Kanälen...">
     </div>
     
-    <div id="channelList">
+    <div class="stats">
+      <div>Verfügbare Kanäle: <span id="channelCount" class="channel-count">0</span></div>
+      <div>Angezeigt: <span id="visibleCount" class="channel-count">0</span></div>
+    </div>
+    
+    <div class="groups-container" id="groupsContainer">
       <div class="loading">
         <div class="loading-spinner"></div>
-        <p>Kanalliste wird geladen...</p>
+        <p>Kanäle werden geladen...</p>
       </div>
     </div>
   </div>
@@ -275,21 +383,31 @@
       <video id="video" controls autoplay playsinline></video>
     </div>
     <div id="nowPlaying" class="now-playing"></div>
+    <div class="player-controls">
+      <button class="control-btn" onclick="document.getElementById('video').play()">▶️ Abspielen</button>
+      <button class="control-btn" onclick="document.getElementById('video').pause()">⏸️ Pause</button>
+      <button class="control-btn" onclick="document.getElementById('video').volume += 0.1">🔊 Lauter</button>
+      <button class="control-btn" onclick="document.getElementById('video').volume -= 0.1">🔈 Leiser</button>
+    </div>
   </div>
 
   <script>
     // M3U Playlist URL
     const PLAYLIST_URL = "https://raw.githubusercontent.com/eAzTeA123/hls_frontend/refs/heads/main/public/ddl-updated-new%20-%20Kopie.m3u8";
+    
+    // Globale Variablen
+    let allChannels = [];
+    let filteredChannels = [];
 
     async function loadPlaylist(url) {
       try {
         const res = await fetch(url);
-        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        if (!res.ok) throw new Error(`Serverfehler: ${res.status}`);
         const text = await res.text();
         return parseM3U(text);
       } catch (error) {
-        console.error("Error loading playlist:", error);
-        showError("Fehler beim Laden der Playlist: " + error.message);
+        console.error("Fehler beim Laden der Playlist:", error);
+        showError("Fehler beim Laden der Kanalliste: " + error.message);
         return [];
       }
     }
@@ -305,7 +423,7 @@
         if (line.startsWith('#EXTINF')) {
           currentItem = {};
           
-          // Extract attributes
+          // Attribute extrahieren
           const attrPart = line.substring(line.indexOf(':') + 1);
           const commaIndex = attrPart.lastIndexOf(',');
           let attributes = '';
@@ -318,7 +436,7 @@
             name = attrPart;
           }
           
-          // Extract logo and group
+          // Logo und Gruppe extrahieren
           const logoMatch = attributes.match(/tvg-logo="([^"]*)"/);
           const groupMatch = attributes.match(/group-title="([^"]*)"/);
           
@@ -327,7 +445,7 @@
           currentItem.group = groupMatch ? groupMatch[1] : 'Andere';
           
         } else if (line && !line.startsWith('#') && currentItem) {
-          // This is the stream URL
+          // Stream-URL
           currentItem.url = line;
           list.push(currentItem);
           currentItem = null;
@@ -337,60 +455,57 @@
       return list;
     }
 
-    function renderList(list) {
-      const container = document.getElementById('channelList');
-      if (!list || list.length === 0) {
-        container.innerHTML = '<div class="loading"><p>Keine Kanäle gefunden</p></div>';
+    function renderGroups(channels) {
+      const container = document.getElementById('groupsContainer');
+      if (!channels || channels.length === 0) {
+        container.innerHTML = '<div class="no-results"><p>Keine Kanäle gefunden</p></div>';
         return;
       }
       
-      // Group channels by group title
+      // Kanäle nach Gruppen gruppieren
       const groups = {};
-      list.forEach(channel => {
+      channels.forEach(channel => {
         if (!groups[channel.group]) groups[channel.group] = [];
         groups[channel.group].push(channel);
       });
       
-      // Sort groups alphabetically
-      const sortedGroups = Object.keys(groups).sort();
-      
       let html = '';
+      let visibleChannels = 0;
       
-      sortedGroups.forEach(group => {
+      for (const [groupName, groupChannels] of Object.entries(groups)) {
+        visibleChannels += groupChannels.length;
+        
         html += `
           <div class="group">
-            <h2>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff99" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="16"></line>
-                <line x1="8" y1="12" x2="16" y2="12"></line>
-              </svg>
-              ${group}
-            </h2>
+            <div class="group-header">
+              <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                ${groupName}
+              </h2>
+              <div class="group-channel-count">${groupChannels.length} Kanäle</div>
+            </div>
             <div class="channels-grid">
-              ${groups[group].map(channel => `
+              ${groupChannels.map(channel => `
                 <div class="channel" data-url="${channel.url}" data-name="${channel.name}">
-                  <img src="${channel.logo || 'https://via.placeholder.com/200x120/222/00ff99?text=No+Logo'}" 
+                  <img src="${channel.logo || 'https://via.placeholder.com/140x80/222/00ff99?text=No+Logo'}" 
                        alt="${channel.name}" 
                        class="channel-logo"
-                       onerror="this.src='https://via.placeholder.com/200x120/222/00ff99?text=No+Logo'">
+                       onerror="this.src='https://via.placeholder.com/140x80/222/00ff99?text=No+Logo'">
                   <div class="channel-name">${channel.name}</div>
-                  <div class="channel-group">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00ff99" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                    </svg>
-                    ${group}
-                  </div>
                 </div>
               `).join('')}
             </div>
           </div>
         `;
-      });
+      }
       
       container.innerHTML = html;
       
-      // Add event listeners to channels
+      // Event-Listener für Kanäle hinzufügen
       document.querySelectorAll('.channel').forEach(channel => {
         channel.addEventListener('click', function() {
           const url = this.getAttribute('data-url');
@@ -399,8 +514,28 @@
         });
       });
       
-      // Update channel count
-      document.getElementById('channelCount').textContent = list.length;
+      // Kanalzähler aktualisieren
+      document.getElementById('visibleCount').textContent = visibleChannels;
+    }
+
+    function filterChannels(searchTerm) {
+      if (!searchTerm) {
+        // Wenn keine Suche, alle Kanäle anzeigen
+        filteredChannels = [...allChannels];
+        renderGroups(filteredChannels);
+        return;
+      }
+      
+      const term = searchTerm.toLowerCase();
+      
+      // Kanäle filtern, die zum Suchbegriff passen
+      const filtered = allChannels.filter(channel => 
+        channel.name.toLowerCase().includes(term) || 
+        channel.group.toLowerCase().includes(term)
+      );
+      
+      filteredChannels = filtered;
+      renderGroups(filtered);
     }
 
     function openPlayer(url, name) {
@@ -411,7 +546,7 @@
       nowPlaying.textContent = name;
       modal.style.display = 'flex';
       
-      // Try to play with HLS.js first
+      // Versuchen mit HLS.js zu spielen
       if (Hls.isSupported()) {
         const hls = new Hls();
         hls.loadSource(url);
@@ -420,38 +555,38 @@
           video.play().catch(e => console.error("Play error:", e));
         });
       } 
-      // Fallback for native HLS support
+      // Fallback für native HLS Unterstützung
       else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = url;
         video.addEventListener('loadedmetadata', function() {
           video.play().catch(e => console.error("Play error:", e));
         });
       } 
-      // If no HLS support
+      // Wenn keine HLS Unterstützung
       else {
         showError("Dein Browser unterstützt keine HLS-Wiedergabe");
       }
     }
 
     function showError(message) {
-      const container = document.getElementById('channelList');
+      const container = document.getElementById('groupsContainer');
       container.innerHTML = `
-        <div class="loading">
-          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ff5555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="no-results">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff5555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="8" x2="12" y2="12"></line>
             <line x1="12" y1="16" x2="12.01" y2="16"></line>
           </svg>
           <h3>Fehler</h3>
           <p>${message}</p>
-          <button id="retryBtn" style="margin-top: 20px; padding: 10px 20px; background: #00ff99; border: none; border-radius: 5px; cursor: pointer;">Erneut versuchen</button>
+          <button id="retryBtn" class="control-btn">Erneut versuchen</button>
         </div>
       `;
       
       document.getElementById('retryBtn').addEventListener('click', init);
     }
 
-    // Close player modal
+    // Player-Modal schließen
     document.getElementById('closeBtn').addEventListener('click', () => {
       const modal = document.getElementById('playerModal');
       const video = document.getElementById('video');
@@ -464,29 +599,25 @@
       modal.style.display = 'none';
     });
 
-    // Search functionality
+    // Suchfunktionalität
     document.getElementById('search').addEventListener('input', function() {
-      const searchTerm = this.value.toLowerCase();
-      const channels = document.querySelectorAll('.channel');
-      
-      channels.forEach(channel => {
-        const name = channel.getAttribute('data-name').toLowerCase();
-        channel.style.display = name.includes(searchTerm) ? 'flex' : 'none';
-      });
+      filterChannels(this.value);
     });
 
-    // Initialize the app
+    // App initialisieren
     async function init() {
       try {
-        const channels = await loadPlaylist(PLAYLIST_URL);
-        renderList(channels);
+        allChannels = await loadPlaylist(PLAYLIST_URL);
+        document.getElementById('channelCount').textContent = allChannels.length;
+        filteredChannels = [...allChannels];
+        renderGroups(filteredChannels);
       } catch (error) {
-        console.error("Initialization error:", error);
+        console.error("Initialisierungsfehler:", error);
         showError("Fehler beim Initialisieren: " + error.message);
       }
     }
 
-    // Start the app
+    // App starten
     document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
