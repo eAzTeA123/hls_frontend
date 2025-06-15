@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Myrcale IPTV</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0e0e0e;
+      color: #fff;
+    }
+
+    header {
+      background: linear-gradient(135deg, #00ff99, #0077ff);
+      padding: 2rem 1rem;
+      text-align: center;
+      color: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      position: relative;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+      letter-spacing: 1px;
+      text-shadow: 2px 2px #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .container {
+      padding: 1.5rem;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .search-container {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.9rem 1rem 0.9rem 3rem;
+      border: none;
+      border-radius: 12px;
+      background: #1e1e1e;
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    input:focus {
+      outline: none;
+      background: #2a2a2a;
+      box-shadow: 0 4px 15px rgba(0, 255, 153, 0.2);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+      color: #00ff99;
+    }
+
+    .group {
+      margin-bottom: 2rem;
+      background: rgba(30, 30, 30, 0.7);
+      border-radius: 15px;
+      padding: 1.2rem;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+      border: 1px solid #2a2a2a;
+    }
+
+    .group h2 {
+      color: #00ff99;
+      font-size: 1.5rem;
+      border-bottom: 2px solid #00ff9960;
+      padding-bottom: 0.6rem;
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .channels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+      margin-top: 1rem;
+    }
+
+    .channel {
+      background: linear-gradient(145deg, #1b1b1b, #222);
+      border-radius: 12px;
+      padding: 15px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      border: 1px solid #333;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .channel:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 255, 153, 0.25);
+      border-color: #00ff99;
+    }
+
+    .channel-logo {
+      width: 100%;
+      height: 120px;
+      border-radius: 8px;
+      object-fit: contain;
+      background: #000;
+      margin-bottom: 12px;
+      border: 1px solid #333;
+    }
+
+    .channel-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 5px;
+      color: #fff;
+      flex-grow: 1;
+    }
+
+    .channel-group {
+      color: #00ff99;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    #playerModal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      flex-direction: column;
+    }
+
+    #videoContainer {
+      width: 90%;
+      max-width: 1000px;
+      position: relative;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    #closeBtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 35px;
+      color: white;
+      cursor: pointer;
+      background: rgba(0,0,0,0.7);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    #closeBtn:hover {
+      background: rgba(255,0,0,0.7);
+      transform: scale(1.1);
+    }
+
+    .now-playing {
+      width: 90%;
+      max-width: 1000px;
+      padding: 15px;
+      text-align: center;
+      font-size: 1.4rem;
+      color: #fff;
+      background: rgba(0,0,0,0.5);
+      border-radius: 0 0 10px 10px;
+      margin-top: -5px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: #00ff99;
+    }
+
+    .loading-spinner {
+      border: 4px solid rgba(0, 255, 153, 0.3);
+      border-radius: 50%;
+      border-top: 4px solid #00ff99;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      color: #aaa;
+      font-size: 0.9rem;
+    }
+
+    .channel-count {
+      display: inline-block;
+      background: #00ff99;
+      color: #000;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+        <polyline points="17 2 12 7 7 2"></polyline>
+      </svg>
+      Myrcale IPTV
+    </h1>
+    <div class="stats">
+      <div>Lädt Kanäle...</div>
+      <div>Kanäle: <span id="channelCount" class="channel-count">0</span></div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="search-container">
+      <div class="search-icon">🔍</div>
+      <input type="text" id="search" placeholder="Suche Sender...">
+    </div>
+    
+    <div id="channelList">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <p>Kanalliste wird geladen...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="playerModal">
+    <span id="closeBtn">✖</span>
+    <div id="videoContainer">
+      <video id="video" controls autoplay playsinline></video>
+    </div>
+    <div id="nowPlaying" class="now-playing"></div>
+  </div>
+
+  <script>
+    // M3U Playlist URL
+    const PLAYLIST_URL = "https://raw.githubusercontent.com/eAzTeA123/hls_frontend/refs/heads/main/public/ddl-updated-new%20-%20Kopie.m3u8";
+
+    async function loadPlaylist(url) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const text = await res.text();
+        return parseM3U(text);
+      } catch (error) {
+        console.error("Error loading playlist:", error);
+        showError("Fehler beim Laden der Playlist: " + error.message);
+        return [];
+      }
+    }
+
+    function parseM3U(data) {
+      const lines = data.split('\n');
+      const list = [];
+      let currentItem = null;
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (line.startsWith('#EXTINF')) {
+          currentItem = {};
+          
+          // Extract attributes
+          const attrPart = line.substring(line.indexOf(':') + 1);
+          const commaIndex = attrPart.lastIndexOf(',');
+          let attributes = '';
+          let name = '';
+          
+          if (commaIndex !== -1) {
+            attributes = attrPart.substring(0, commaIndex);
+            name = attrPart.substring(commaIndex + 1).trim();
+          } else {
+            name = attrPart;
+          }
+          
+          // Extract logo and group
+          const logoMatch = attributes.match(/tvg-logo="([^"]*)"/);
+          const groupMatch = attributes.match(/group-title="([^"]*)"/);
+          
+          currentItem.name = name;
+          currentItem.logo = logoMatch ? logoMatch[1] : '';
+          currentItem.group = groupMatch ? groupMatch[1] : 'Andere';
+          
+        } else if (line && !line.startsWith('#') && currentItem) {
+          // This is the stream URL
+          currentItem.url = line;
+          list.push(currentItem);
+          currentItem = null;
+        }
+      }
+      
+      return list;
+    }
+
+    function renderList(list) {
+      const container = document.getElementById('channelList');
+      if (!list || list.length === 0) {
+        container.innerHTML = '<div class="loading"><p>Keine Kanäle gefunden</p></div>';
+        return;
+      }
+      
+      // Group channels by group title
+      const groups = {};
+      list.forEach(channel => {
+        if (!groups[channel.group]) groups[channel.group] = [];
+        groups[channel.group].push(channel);
+      });
+      
+      // Sort groups alphabetically
+      const sortedGroups = Object.keys(groups).sort();
+      
+      let html = '';
+      
+      sortedGroups.forEach(group => {
+        html += `
+          <div class="group">
+            <h2>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff99" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              ${group}
+            </h2>
+            <div class="channels-grid">
+              ${groups[group].map(channel => `
+                <div class="channel" data-url="${channel.url}" data-name="${channel.name}">
+                  <img src="${channel.logo || 'https://via.placeholder.com/200x120/222/00ff99?text=No+Logo'}" 
+                       alt="${channel.name}" 
+                       class="channel-logo"
+                       onerror="this.src='https://via.placeholder.com/200x120/222/00ff99?text=No+Logo'">
+                  <div class="channel-name">${channel.name}</div>
+                  <div class="channel-group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00ff99" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    </svg>
+                    ${group}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+      
+      // Add event listeners to channels
+      document.querySelectorAll('.channel').forEach(channel => {
+        channel.addEventListener('click', function() {
+          const url = this.getAttribute('data-url');
+          const name = this.getAttribute('data-name');
+          openPlayer(url, name);
+        });
+      });
+      
+      // Update channel count
+      document.getElementById('channelCount').textContent = list.length;
+    }
+
+    function openPlayer(url, name) {
+      const video = document.getElementById('video');
+      const modal = document.getElementById('playerModal');
+      const nowPlaying = document.getElementById('nowPlaying');
+      
+      nowPlaying.textContent = name;
+      modal.style.display = 'flex';
+      
+      // Try to play with HLS.js first
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+          video.play().catch(e => console.error("Play error:", e));
+        });
+      } 
+      // Fallback for native HLS support
+      else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = url;
+        video.addEventListener('loadedmetadata', function() {
+          video.play().catch(e => console.error("Play error:", e));
+        });
+      } 
+      // If no HLS support
+      else {
+        showError("Dein Browser unterstützt keine HLS-Wiedergabe");
+      }
+    }
+
+    function showError(message) {
+      const container = document.getElementById('channelList');
+      container.innerHTML = `
+        <div class="loading">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ff5555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <h3>Fehler</h3>
+          <p>${message}</p>
+          <button id="retryBtn" style="margin-top: 20px; padding: 10px 20px; background: #00ff99; border: none; border-radius: 5px; cursor: pointer;">Erneut versuchen</button>
+        </div>
+      `;
+      
+      document.getElementById('retryBtn').addEventListener('click', init);
+    }
+
+    // Close player modal
+    document.getElementById('closeBtn').addEventListener('click', () => {
+      const modal = document.getElementById('playerModal');
+      const video = document.getElementById('video');
+      
+      if (video.src) {
+        video.pause();
+        video.src = '';
+      }
+      
+      modal.style.display = 'none';
+    });
+
+    // Search functionality
+    document.getElementById('search').addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const channels = document.querySelectorAll('.channel');
+      
+      channels.forEach(channel => {
+        const name = channel.getAttribute('data-name').toLowerCase();
+        channel.style.display = name.includes(searchTerm) ? 'flex' : 'none';
+      });
+    });
+
+    // Initialize the app
+    async function init() {
+      try {
+        const channels = await loadPlaylist(PLAYLIST_URL);
+        renderList(channels);
+      } catch (error) {
+        console.error("Initialization error:", error);
+        showError("Fehler beim Initialisieren: " + error.message);
+      }
+    }
+
+    // Start the app
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
