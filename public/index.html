@@ -10,6 +10,7 @@
       --primary: #00ff99;
       --primary-dark: #00cc77;
       --secondary: #0077ff;
+      --events-color: #ff6b6b;
       --dark-bg: #0e0e0e;
       --card-bg: #1b1b1b;
       --header-gradient: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -114,6 +115,50 @@
       text-align: center;
     }
 
+    .playlist-selector {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .playlist-btn {
+      background: rgba(30, 30, 30, 0.7);
+      border: 1px solid #2a2a2a;
+      border-radius: 50px;
+      padding: 8px 20px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .playlist-btn:hover {
+      background: rgba(0, 255, 153, 0.15);
+      border-color: var(--primary);
+    }
+
+    .playlist-btn.active {
+      background: var(--primary);
+      color: #000;
+      border-color: var(--primary);
+    }
+
+    .playlist-btn.events {
+      background: rgba(255, 107, 107, 0.1);
+      border-color: rgba(255, 107, 107, 0.3);
+    }
+
+    .playlist-btn.events:hover, 
+    .playlist-btn.events.active {
+      background: var(--events-color);
+      color: #000;
+    }
+
     .groups-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -129,9 +174,17 @@
       transition: all 0.3s ease;
     }
 
+    .group.events-group {
+      border-left: 4px solid var(--events-color);
+    }
+
     .group:hover {
       transform: translateY(-3px);
       box-shadow: 0 12px 30px rgba(0, 255, 153, 0.15);
+    }
+
+    .group.events-group:hover {
+      box-shadow: 0 12px 30px rgba(255, 107, 107, 0.3);
     }
 
     .group-header {
@@ -143,6 +196,10 @@
       border-bottom: 2px solid var(--primary-dark);
     }
 
+    .events-group .group-header {
+      border-bottom-color: var(--events-color);
+    }
+
     .group h2 {
       color: var(--primary);
       font-size: 1.4rem;
@@ -152,6 +209,10 @@
       gap: 8px;
     }
 
+    .events-group h2 {
+      color: var(--events-color);
+    }
+
     .group-channel-count {
       background: rgba(0, 255, 153, 0.15);
       color: var(--primary);
@@ -159,6 +220,11 @@
       border-radius: 15px;
       font-size: 0.85rem;
       font-weight: 600;
+    }
+
+    .events-group .group-channel-count {
+      background: rgba(255, 107, 107, 0.2);
+      color: var(--events-color);
     }
 
     .channels-grid {
@@ -186,6 +252,11 @@
       box-shadow: 0 8px 20px rgba(0, 255, 153, 0.25);
       border-color: var(--primary);
       background: linear-gradient(145deg, #222, #2a2a2a);
+    }
+
+    .events-group .channel:hover {
+      box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+      border-color: var(--events-color);
     }
 
     .channel-logo {
@@ -322,6 +393,11 @@
       .group h2 {
         font-size: 1.2rem;
       }
+      
+      .playlist-selector {
+        flex-direction: column;
+        align-items: center;
+      }
     }
 
     .player-controls {
@@ -329,6 +405,7 @@
       justify-content: center;
       gap: 15px;
       margin-top: 15px;
+      flex-wrap: wrap;
     }
 
     .control-btn {
@@ -369,6 +446,33 @@
       <div>Angezeigt: <span id="visibleCount" class="channel-count">0</span></div>
     </div>
     
+    <div class="playlist-selector" id="playlistSelector">
+      <button class="playlist-btn active" data-playlist="all">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+          <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+        </svg>
+        Alle Kanäle
+      </button>
+      <button class="playlist-btn" data-playlist="main">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+          <polyline points="17 2 12 7 7 2"></polyline>
+        </svg>
+        Hauptkanäle
+      </button>
+      <button class="playlist-btn events" data-playlist="events">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        Live Events
+      </button>
+    </div>
+    
     <div class="groups-container" id="groupsContainer">
       <div class="loading">
         <div class="loading-spinner"></div>
@@ -392,19 +496,29 @@
   </div>
 
   <script>
-    // M3U Playlist URL
-    const PLAYLIST_URL = "https://raw.githubusercontent.com/eAzTeA123/hls_frontend/refs/heads/main/public/ddl-updated-new%20-%20Kopie.m3u8";
+    // Playlisten URLs
+    const PLAYLISTS = {
+      main: "https://raw.githubusercontent.com/eAzTeA123/hls_frontend/refs/heads/main/public/ddl-updated-new%20-%20Kopie.m3u8",
+      events: "https://raw.githubusercontent.com/eAzTeA123/hls_frontend/refs/heads/main/public/events.m3u8"
+    };
     
     // Globale Variablen
     let allChannels = [];
     let filteredChannels = [];
+    let activePlaylist = "all"; // 'all', 'main', 'events'
 
-    async function loadPlaylist(url) {
+    async function loadPlaylist(url, playlistName) {
       try {
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Serverfehler: ${res.status}`);
         const text = await res.text();
-        return parseM3U(text);
+        const channels = parseM3U(text);
+        
+        // Markiere jeden Kanal mit der Playlist-Herkunft
+        return channels.map(channel => ({
+          ...channel,
+          playlist: playlistName
+        }));
       } catch (error) {
         console.error("Fehler beim Laden der Playlist:", error);
         showError("Fehler beim Laden der Kanalliste: " + error.message);
@@ -465,31 +579,50 @@
       // Kanäle nach Gruppen gruppieren
       const groups = {};
       channels.forEach(channel => {
-        if (!groups[channel.group]) groups[channel.group] = [];
-        groups[channel.group].push(channel);
+        // Füge Playlist-Herkunft zur Gruppen-ID hinzu für bessere Trennung
+        const groupId = `${channel.group}-${channel.playlist}`;
+        if (!groups[groupId]) {
+          groups[groupId] = {
+            name: channel.group,
+            channels: [],
+            playlist: channel.playlist
+          };
+        }
+        groups[groupId].channels.push(channel);
       });
       
       let html = '';
       let visibleChannels = 0;
       
-      for (const [groupName, groupChannels] of Object.entries(groups)) {
-        visibleChannels += groupChannels.length;
+      for (const [groupId, group] of Object.entries(groups)) {
+        visibleChannels += group.channels.length;
+        
+        // Bestimme die CSS-Klasse basierend auf der Playlist
+        const groupClass = group.playlist === 'events' ? 'group events-group' : 'group';
         
         html += `
-          <div class="group">
+          <div class="${groupClass}">
             <div class="group-header">
               <h2>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="16"></line>
-                  <line x1="8" y1="12" x2="16" y2="12"></line>
-                </svg>
-                ${groupName}
+                ${group.playlist === 'events' ? 
+                  `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--events-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>` : 
+                  `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                  </svg>`
+                }
+                ${group.name}
               </h2>
-              <div class="group-channel-count">${groupChannels.length} Kanäle</div>
+              <div class="group-channel-count">${group.channels.length} Kanäle</div>
             </div>
             <div class="channels-grid">
-              ${groupChannels.map(channel => `
+              ${group.channels.map(channel => `
                 <div class="channel" data-url="${channel.url}" data-name="${channel.name}">
                   <img src="${channel.logo || 'https://via.placeholder.com/140x80/222/00ff99?text=No+Logo'}" 
                        alt="${channel.name}" 
@@ -519,9 +652,18 @@
     }
 
     function filterChannels(searchTerm) {
+      let channelsToFilter = [...allChannels];
+      
+      // Filtere nach aktiver Playlist
+      if (activePlaylist !== 'all') {
+        channelsToFilter = channelsToFilter.filter(
+          channel => channel.playlist === activePlaylist
+        );
+      }
+      
       if (!searchTerm) {
         // Wenn keine Suche, alle Kanäle anzeigen
-        filteredChannels = [...allChannels];
+        filteredChannels = channelsToFilter;
         renderGroups(filteredChannels);
         return;
       }
@@ -529,7 +671,7 @@
       const term = searchTerm.toLowerCase();
       
       // Kanäle filtern, die zum Suchbegriff passen
-      const filtered = allChannels.filter(channel => 
+      const filtered = channelsToFilter.filter(channel => 
         channel.name.toLowerCase().includes(term) || 
         channel.group.toLowerCase().includes(term)
       );
@@ -604,10 +746,35 @@
       filterChannels(this.value);
     });
 
+    // Playlist-Selector
+    document.querySelectorAll('.playlist-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        // Aktiven Button markieren
+        document.querySelectorAll('.playlist-btn').forEach(b => 
+          b.classList.remove('active')
+        );
+        this.classList.add('active');
+        
+        // Aktive Playlist setzen
+        activePlaylist = this.dataset.playlist;
+        
+        // Kanäle neu filtern
+        filterChannels(document.getElementById('search').value);
+      });
+    });
+
     // App initialisieren
     async function init() {
       try {
-        allChannels = await loadPlaylist(PLAYLIST_URL);
+        // Lade beide Playlisten parallel
+        const [mainChannels, eventsChannels] = await Promise.all([
+          loadPlaylist(PLAYLISTS.main, 'main'),
+          loadPlaylist(PLAYLISTS.events, 'events')
+        ]);
+        
+        // Kombiniere alle Kanäle
+        allChannels = [...mainChannels, ...eventsChannels];
+        
         document.getElementById('channelCount').textContent = allChannels.length;
         filteredChannels = [...allChannels];
         renderGroups(filteredChannels);
