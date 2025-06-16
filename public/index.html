@@ -496,14 +496,11 @@
   </div>
 
   <script>
-    // Playlisten URLs mit CORS-Proxy
+    // Playlisten URLs
     const PLAYLISTS = {
       main: "https://eaztea-privato.hf.space/playlist/channels.m3u8",
       events: "https://eaztea-privato.hf.space/playlist/events.m3u8"
     };
-    
-    // CORS-Proxy für zuverlässigen Zugriff
-    const CORS_PROXY = "https://corsproxy.io/?";
     
     // Globale Variablen
     let allChannels = [];
@@ -512,12 +509,8 @@
 
     async function loadPlaylist(url, playlistName) {
       try {
-        // Verwende CORS-Proxy für den Zugriff
-        const proxyUrl = CORS_PROXY + encodeURIComponent(url);
-        const res = await fetch(proxyUrl);
-        
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`Serverfehler: ${res.status}`);
-        
         const text = await res.text();
         const channels = parseM3U(text);
         
