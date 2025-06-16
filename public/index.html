@@ -496,144 +496,335 @@
   </div>
 
   <script>
-    // Playlisten URLs
-    const PLAYLISTS = {
-      main: "https://eaztea-vpn.hf.space/playlist/channels.m3u8",
-      events: "https://eaztea-vpn.hf.space/playlist/events.m3u8"
-    };
+  // Playlisten URLs
+  const PLAYLISTS = {
+    main: "https://eaztea-vpn.hf.space/playlist/channels.m3u8",
+    events: "https://eaztea-vpn.hf.space/playlist/events.m3u8"
+  };
+  
+  // Globale Variablen
+  let allChannels = [];
+  let filteredChannels = [];
+  let activePlaylist = "all";
+
+  async function loadPlaylist(url, playlistName) {
+    try {
+      console.log(`Lade Playlist: ${url}`);
+      const res = await fetch(url);
+      
+      if (!res.ok) {
+        throw new Error(`Serverfehler: ${res.status} ${res.statusText}`);
+      }
+      
+      const text = await res.text();
+      console.log(`Playlist-Rohdaten erhalten (${text.length} Zeichen)`);
+      
+      const channels = parseM3U(text, playlistName);
+      console.log(`${channels.length} Kanäle geparst aus ${playlistName}`);
+      
+      return channels;
+    } catch (error) {
+      console.error("Fehler beim Laden der Playlist:", error);
+      showError("Fehler beim Laden der Kanalliste: " + error.message);
+      return [];
+    }
+  }
+
+  function parseM3U(data, playlistName) {
+    const lines = data.split('\n');
+    const channels = [];
+    let currentChannel = null;
     
-    // Globale Variablen
-    let allChannels = [];
-    let filteredChannels = [];
-    let activePlaylist = "all"; // 'all', 'main', 'events'
-
-    async function loadPlaylist(url, playlistName) {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Serverfehler: ${res.status}`);
-        const text = await res.text();
-        const channels = parseM3U(text);
-        
-        // Debug-Ausgabe
-        console.log(`Geladene Kanäle aus ${playlistName}:`, channels);
-        
-        // Markiere jeden Kanal mit der Playlist-Herkunft
-        return channels.map(channel => ({
-          ...channel,
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      if (!line) continue;
+      
+      if (line.startsWith('#EXTINF')) {
+        currentChannel = {
+          name: '',
+          logo: '',
+          group: 'Andere',
+          tvgId: '',
+          url: '',
           playlist: playlistName
-        }));
-      } catch (error) {
-        console.error("Fehler beim Laden der Playlist:", error);
-        showError("Fehler beim Laden der Kanalliste: " + error.message);
-        return [];
+        };
+        
+        // Extrahiere Attribute
+        const attrString = line.substring(8).replace(':-1', '');
+        const attrs = attrString.split(' ').filter(Boolean);
+        const namePart = attrs.pop() || '';
+        
+        // Verarbeite Attribute
+        attrs.forEach(attr => {
+          if (attr.includes('=')) {
+            const [key, value] = attr.split('=');
+            const cleanValue = value.replace(/"/g, '');
+            
+            switch(key.toLowerCase()) {
+              case 'tvg-logo':
+                currentChannel.logo = cleanValue;
+                break;
+              case 'group-title':
+                currentChannel.group = cleanValue || 'Andere';
+                break;
+              case 'tvg-id':
+                currentChannel.tvgId = cleanValue;
+                break;
+            }
+          }
+        });
+        
+        // Setze den Namen (entferne führendes # falls vorhanden)
+        currentChannel.name = namePart.startsWith('#') 
+          ? namePart.substring(1) 
+          : namePart;
+      } 
+      else if (currentChannel && (line.startsWith('http://') || line.startsWith('https://')) {
+        currentChannel.url = line;
+        channels.push(currentChannel);
+        currentChannel = null;
       }
     }
+    
+    console.log(`Parsed ${channels.length} channels from ${playlistName}`);
+    return channels;
+  }
 
-    function parseM3U(data) {
-      const lines = data.split('\n');
-      const list = [];
-      let currentItem = null;
-      let skipNextLines = false;
+  function renderGroups(channels) {
+    const container = document.getElementById('groupsContainer');
+    
+    if (!channels || channels.length === 0) {
+      container.innerHTML = '<div class="no-results"><p>Keine Kanäle gefunden</p></div>';
+      return;
+    }
+    
+    // Gruppiere Kanäle nach Gruppenname und Playlist
+    const groups = {};
+    let visibleCount = 0;
+    
+    channels.forEach(channel => {
+      const groupKey = `${channel.group}-${channel.playlist}`;
       
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        
-        if (!line) continue; // Leere Zeilen überspringen
-        
-        // #EXTM3U Header ignorieren
-        if (line.startsWith('#EXTM3U')) continue;
-        
-        // #EXTINF Zeilen verarbeiten
-        if (line.startsWith('#EXTINF')) {
-          currentItem = {};
-          skipNextLines = false;
-          
-          // Attribute extrahieren
-          const attrPart = line.substring(line.indexOf(':') + 1);
-          const commaIndex = attrPart.lastIndexOf(',');
-          let attributes = '';
-          let name = '';
-          
-          if (commaIndex !== -1) {
-            attributes = attrPart.substring(0, commaIndex);
-            name = attrPart.substring(commaIndex + 1).trim();
-          } else {
-            name = attrPart;
-          }
-          
-          // Attribute parsen
-          const logoMatch = attributes.match(/tvg-logo="([^"]*)"/i);
-          const groupMatch = attributes.match(/group-title="([^"]*)"/i);
-          const tvgIdMatch = attributes.match(/tvg-id="([^"]*)"/i);
-          
-          // Kanalnamen bereinigen
-          let cleanName = name.trim();
-          if (cleanName.startsWith('#')) cleanName = cleanName.substring(1);
-          
-          currentItem.name = cleanName;
-          currentItem.logo = logoMatch ? logoMatch[1].trim() : '';
-          currentItem.group = groupMatch ? groupMatch[1].trim() : 'Andere';
-          currentItem.tvgId = tvgIdMatch ? tvgIdMatch[1].trim() : '';
-          
-          // Weitere Eigenschaften hinzufügen
-          currentItem.duration = attributes.match(/-?\d+/)?.[0] || '-1';
-          
-        } 
-        // #EXTVLCOPT Zeilen überspringen
-        else if (line.startsWith('#EXTVLCOPT')) {
-          continue;
-        } 
-        // Stream-URL verarbeiten
-        else if (currentItem && !skipNextLines) {
-          // Prüfen, ob es eine gültige URL ist
-          if (line.startsWith('http') || line.startsWith('https')) {
-            currentItem.url = line;
-            list.push(currentItem);
-            currentItem = null;
-          } else {
-            // Wenn keine gültige URL, diesen Eintrag verwerfen
-            console.warn("Ungültige URL für Kanal:", currentItem.name, "URL:", line);
-            currentItem = null;
-          }
-        }
+      if (!groups[groupKey]) {
+        groups[groupKey] = {
+          name: channel.group,
+          channels: [],
+          playlist: channel.playlist
+        };
       }
       
-      // Debug-Ausgabe
-      console.log("Parsed channels:", list);
-      return list;
+      groups[groupKey].channels.push(channel);
+      visibleCount++;
+    });
+    
+    // Sortiere Gruppen alphabetisch
+    const sortedGroups = Object.values(groups).sort((a, b) => 
+      a.name.localeCompare(b.name)
+    );
+    
+    let html = '';
+    
+    sortedGroups.forEach(group => {
+      const isEvents = group.playlist === 'events';
+      const groupClass = isEvents ? 'group events-group' : 'group';
+      
+      html += `
+        <div class="${groupClass}">
+          <div class="group-header">
+            <h2>
+              ${isEvents ? `
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--events-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              ` : `
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+              `}
+              ${group.name}
+            </h2>
+            <div class="group-channel-count">${group.channels.length}</div>
+          </div>
+          <div class="channels-grid">
+            ${group.channels.map(channel => `
+              <div class="channel" data-url="${channel.url}" data-name="${channel.name}">
+                <img src="${channel.logo || 'https://via.placeholder.com/140x80/222/00ff99?text=No+Logo'}" 
+                     alt="${channel.name}" 
+                     class="channel-logo"
+                     onerror="this.onerror=null;this.src='https://via.placeholder.com/140x80/222/00ff99?text=No+Logo'">
+                <div class="channel-name">${channel.name}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+    document.getElementById('visibleCount').textContent = visibleCount;
+    
+    // Event-Listener für Kanäle hinzufügen
+    document.querySelectorAll('.channel').forEach(channel => {
+      channel.addEventListener('click', function() {
+        const url = this.getAttribute('data-url');
+        const name = this.getAttribute('data-name');
+        openPlayer(url, name);
+      });
+    });
+  }
+
+  function filterChannels(searchTerm) {
+    if (!allChannels.length) return;
+    
+    let channelsToFilter = [...allChannels];
+    
+    // Filter nach aktiver Playlist
+    if (activePlaylist !== 'all') {
+      channelsToFilter = channelsToFilter.filter(
+        channel => channel.playlist === activePlaylist
+      );
     }
+    
+    // Suchfilter anwenden
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      channelsToFilter = channelsToFilter.filter(channel => 
+        channel.name.toLowerCase().includes(term) || 
+        channel.group.toLowerCase().includes(term)
+      );
+    }
+    
+    filteredChannels = channelsToFilter;
+    renderGroups(filteredChannels);
+  }
 
-    // ... (restlicher Code bleibt unverändert) ...
+  function openPlayer(url, name) {
+    const video = document.getElementById('video');
+    const modal = document.getElementById('playerModal');
+    const nowPlaying = document.getElementById('nowPlaying');
+    
+    nowPlaying.textContent = name;
+    modal.style.display = 'flex';
+    
+    // Versuche mit HLS.js zu spielen
+    if (Hls.isSupported()) {
+      if (window.hls) window.hls.destroy();
+      
+      const hls = new Hls();
+      window.hls = hls;
+      
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(e => console.error("Play-Fehler:", e));
+      });
+    } 
+    // Fallback für native HLS Unterstützung
+    else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = url;
+      video.addEventListener('loadedmetadata', () => {
+        video.play().catch(e => console.error("Play-Fehler:", e));
+      });
+    } 
+    else {
+      showError("Dein Browser unterstützt keine HLS-Wiedergabe");
+    }
+  }
 
-    // App initialisieren
-    async function init() {
-      try {
-        // Lade beide Playlisten parallel
-        const [mainChannels, eventsChannels] = await Promise.all([
-          loadPlaylist(PLAYLISTS.main, 'main'),
-          loadPlaylist(PLAYLISTS.events, 'events')
-        ]);
-        
-        // Debug-Ausgabe
-        console.log("Main Channels:", mainChannels);
-        console.log("Events Channels:", eventsChannels);
-        
-        // Kombiniere alle Kanäle
-        allChannels = [...mainChannels, ...eventsChannels];
-        
-        document.getElementById('channelCount').textContent = allChannels.length;
-        document.getElementById('visibleCount').textContent = allChannels.length;
-        
-        filteredChannels = [...allChannels];
-        renderGroups(filteredChannels);
-      } catch (error) {
-        console.error("Initialisierungsfehler:", error);
-        showError("Fehler beim Initialisieren: " + error.message);
+  function showError(message) {
+    const container = document.getElementById('groupsContainer');
+    container.innerHTML = `
+      <div class="no-results">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff5555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <h3>Fehler</h3>
+        <p>${message}</p>
+        <button id="retryBtn" class="control-btn">Erneut versuchen</button>
+      </div>
+    `;
+    
+    document.getElementById('retryBtn').addEventListener('click', init);
+  }
+
+  // Player-Modal schließen
+  document.getElementById('closeBtn').addEventListener('click', () => {
+    const modal = document.getElementById('playerModal');
+    const video = document.getElementById('video');
+    
+    if (window.hls) {
+      window.hls.destroy();
+      window.hls = null;
+    }
+    
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    
+    modal.style.display = 'none';
+  });
+
+  // Suchfunktionalität
+  document.getElementById('search').addEventListener('input', function() {
+    filterChannels(this.value);
+  });
+
+  // Playlist-Selector
+  document.querySelectorAll('.playlist-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.playlist-btn').forEach(b => 
+        b.classList.remove('active')
+      );
+      this.classList.add('active');
+      activePlaylist = this.dataset.playlist;
+      filterChannels(document.getElementById('search').value);
+    });
+  });
+
+  // App initialisieren
+  async function init() {
+    try {
+      const container = document.getElementById('groupsContainer');
+      container.innerHTML = `
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Lade Kanäle...</p>
+        </div>
+      `;
+      
+      const [mainChannels, eventsChannels] = await Promise.all([
+        loadPlaylist(PLAYLISTS.main, 'main'),
+        loadPlaylist(PLAYLISTS.events, 'events')
+      ]);
+      
+      allChannels = [...mainChannels, ...eventsChannels];
+      document.getElementById('channelCount').textContent = allChannels.length;
+      
+      if (allChannels.length === 0) {
+        showError("Keine Kanäle gefunden. Die Playlisten sind möglicherweise leer.");
+        return;
       }
+      
+      filteredChannels = [...allChannels];
+      renderGroups(filteredChannels);
+      
+    } catch (error) {
+      console.error("Initialisierungsfehler:", error);
+      showError("Fehler beim Initialisieren: " + error.message);
     }
+  }
 
-    // App starten
-    document.addEventListener('DOMContentLoaded', init);
-  </script>
+  // App starten
+  document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>
